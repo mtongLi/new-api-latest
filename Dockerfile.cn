@@ -1,24 +1,26 @@
-# China-network build: base images via a domestic Docker Hub proxy, dependencies from domestic mirrors.
+# China-network build, mirrors the upstream Dockerfile with:
+#   - base images via a domestic Docker Hub proxy (same tags/digests as upstream)
+#   - npm / Go module / apt downloads from domestic mirrors
+# Keep in sync with Dockerfile when upstream changes it.
 # To use images synced into your own ACR instead, override with --build-arg, e.g.
-#   --build-arg BUN_IMAGE=mindra-registry-vpc.cn-beijing.cr.aliyuncs.com/mindra/bun:latest
-ARG BUN_IMAGE=docker.m.daocloud.io/oven/bun:latest
-ARG GOLANG_IMAGE=docker.m.daocloud.io/library/golang:alpine
-ARG DEBIAN_IMAGE=docker.m.daocloud.io/library/debian:bookworm-slim
+#   --build-arg BUN_IMAGE=mindra-registry-vpc.cn-beijing.cr.aliyuncs.com/mindra/bun:1.4.4
+ARG BUN_IMAGE=docker.m.daocloud.io/oven/bun:1.4.4@sha256:1d22548f177f4ff38e0c15baa3c2c46c6c2060ba2d1bc573bb4720b407548f1d
+ARG GOLANG_IMAGE=docker.m.daocloud.io/library/golang:1.26.10-alpine@sha256:9ce231b28998b32e116927c61aa5c406183061d4f3f2d61b292c88e7f6bdf7ca
+ARG DEBIAN_IMAGE=docker.m.daocloud.io/library/debian:bookworm-slim@sha256:f06537653ac770703bc45b4b113475bd402f451e85223f0f2837acbf89ab020a
 
 FROM ${BUN_IMAGE} AS builder
 
 ENV BUN_CONFIG_REGISTRY=https://registry.npmmirror.com
 
-WORKDIR /build
-COPY web/package.json .
-COPY web/bun.lock .
-RUN bun install
-COPY ./web .
-COPY ./VERSION .
-RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) bun run build
+WORKDIR /build/web
+COPY web/package.json web/bun.lock ./
+RUN bun install --frozen-lockfile
+COPY ./web ./
+COPY ./VERSION /build/VERSION
+RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat /build/VERSION) bun run build
 
 FROM ${GOLANG_IMAGE} AS builder2
-ENV GO111MODULE=on CGO_ENABLED=0
+ENV GO111MODULE=on CGO_ENABLED=0 GOWORK=off
 ENV GOPROXY=https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,direct
 ENV GOSUMDB=sum.golang.google.cn
 
@@ -30,11 +32,15 @@ ENV GOEXPERIMENT=greenteagc
 WORKDIR /build
 
 ADD go.mod go.sum ./
+# relaykit and tokenkit are local submodules referenced via replace; their
+# go.mod files must be present for go mod download to resolve the main module graph.
+ADD relaykit/go.mod ./relaykit/go.mod
+ADD tokenkit/go.mod ./tokenkit/go.mod
 RUN go mod download
 
 COPY . .
-COPY --from=builder /build/dist ./web/dist
-RUN go build -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=$(cat VERSION)'" -o new-api
+COPY --from=builder /build/web/dist ./web/dist
+RUN go build -pgo="$(go list -m -f '{{.Dir}}' github.com/Calcium-Ion/moejs)/default.pgo" -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=$(cat VERSION)'" -o new-api
 
 FROM ${DEBIAN_IMAGE}
 
@@ -45,6 +51,7 @@ RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debia
     && update-ca-certificates
 
 COPY --from=builder2 /build/new-api /
+COPY LICENSE NOTICE THIRD-PARTY-LICENSES.md /licenses/
 EXPOSE 3000
 WORKDIR /data
 ENTRYPOINT ["/new-api"]
