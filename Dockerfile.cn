@@ -1,0 +1,50 @@
+# China-network build: base images via a domestic Docker Hub proxy, dependencies from domestic mirrors.
+# To use images synced into your own ACR instead, override with --build-arg, e.g.
+#   --build-arg BUN_IMAGE=mindra-registry-vpc.cn-beijing.cr.aliyuncs.com/mindra/bun:latest
+ARG BUN_IMAGE=docker.m.daocloud.io/oven/bun:latest
+ARG GOLANG_IMAGE=docker.m.daocloud.io/library/golang:alpine
+ARG DEBIAN_IMAGE=docker.m.daocloud.io/library/debian:bookworm-slim
+
+FROM ${BUN_IMAGE} AS builder
+
+ENV BUN_CONFIG_REGISTRY=https://registry.npmmirror.com
+
+WORKDIR /build
+COPY web/package.json .
+COPY web/bun.lock .
+RUN bun install
+COPY ./web .
+COPY ./VERSION .
+RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) bun run build
+
+FROM ${GOLANG_IMAGE} AS builder2
+ENV GO111MODULE=on CGO_ENABLED=0
+ENV GOPROXY=https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,direct
+ENV GOSUMDB=sum.golang.google.cn
+
+ARG TARGETOS
+ARG TARGETARCH
+ENV GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64}
+ENV GOEXPERIMENT=greenteagc
+
+WORKDIR /build
+
+ADD go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+COPY --from=builder /build/dist ./web/dist
+RUN go build -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=$(cat VERSION)'" -o new-api
+
+FROM ${DEBIAN_IMAGE}
+
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata libasan8 wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-ca-certificates
+
+COPY --from=builder2 /build/new-api /
+EXPOSE 3000
+WORKDIR /data
+ENTRYPOINT ["/new-api"]
