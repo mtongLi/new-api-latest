@@ -17,7 +17,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
@@ -26,6 +33,12 @@ import { NotificationPopover } from '@/components/notification-popover'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SystemUpdateAction } from '@/features/system-update/system-update-action'
 import { useNotifications } from '@/hooks/use-notifications'
@@ -59,6 +72,8 @@ export interface PublicHeaderProps {
   showNavigation?: boolean
   showAuthButtons?: boolean
   showNotifications?: boolean
+  /** Show the system version badge beside the site name */
+  showVersion?: boolean
   className?: string
 }
 
@@ -72,6 +87,7 @@ export function PublicHeader(props: PublicHeaderProps) {
     homeUrl = '/',
     showAuthButtons = true,
     showNotifications = true,
+    showVersion = true,
   } = props
 
   const { t } = useTranslation()
@@ -98,6 +114,20 @@ export function PublicHeader(props: PublicHeaderProps) {
   const isAuthenticated = !!user
   const displaySiteName = customSiteName || systemName
   const links = dynamicLinks.length > 0 ? dynamicLinks : navLinks
+
+  // Links that share a `group` collapse into a single dropdown entry, placed
+  // where the first link of that group appears.
+  const navEntries: { group?: string; links: TopNavLink[] }[] = []
+  for (const link of links) {
+    const groupEntry = link.group
+      ? navEntries.find((entry) => entry.group === link.group)
+      : undefined
+    if (groupEntry) {
+      groupEntry.links.push(link)
+    } else {
+      navEntries.push({ group: link.group, links: [link] })
+    }
+  }
 
   let logoContent: ReactNode = (
     <HeaderLogo
@@ -168,7 +198,7 @@ export function PublicHeader(props: PublicHeaderProps) {
 
   const handleNavLinkClick = useCallback(
     (
-      event: React.MouseEvent<HTMLAnchorElement>,
+      event: React.MouseEvent<HTMLElement>,
       link: TopNavLink,
       closeMobile = false
     ) => {
@@ -234,13 +264,71 @@ export function PublicHeader(props: PublicHeaderProps) {
                   )}
                 </span>
               </Link>
-              <SystemUpdateAction presentation='version' />
+              {showVersion && <SystemUpdateAction presentation='version' />}
             </div>
 
             {/* Desktop nav */}
             <div className='hidden min-w-0 items-center gap-0.5 lg:flex'>
-              {links.map((link) => {
-                const isActive = pathname === link.href
+              {navEntries.map((entry) => {
+                if (entry.group) {
+                  const groupActive = entry.links.some(
+                    (link) => !link.hash && pathname === link.href
+                  )
+                  return (
+                    <DropdownMenu key={`group:${entry.group}`} modal={false}>
+                      <DropdownMenuTrigger
+                        openOnHover
+                        delay={60}
+                        className={cn(
+                          'group/nav-group inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-200 outline-none',
+                          groupActive
+                            ? 'text-foreground'
+                            : 'text-muted-foreground hover:text-foreground data-popup-open:text-foreground'
+                        )}
+                      >
+                        {entry.group}
+                        <ChevronDown
+                          className='size-3.5 transition-transform duration-200 group-data-popup-open/nav-group:rotate-180'
+                          aria-hidden
+                        />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align='start'
+                        sideOffset={10}
+                        className='w-44 p-1.5'
+                      >
+                        {entry.links.map((link) => (
+                          <DropdownMenuItem
+                            key={`${link.title}:${link.href}`}
+                            disabled={link.disabled}
+                            className={cn(
+                              'px-2.5 py-2',
+                              !link.hash &&
+                                pathname === link.href &&
+                                'text-foreground font-medium'
+                            )}
+                            onClick={(event) => handleNavLinkClick(event, link)}
+                            render={
+                              link.external ? (
+                                <a
+                                  href={link.href}
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                />
+                              ) : (
+                                <Link to={link.href} hash={link.hash} />
+                              )
+                            }
+                          >
+                            {t(link.title)}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )
+                }
+                const link = entry.links[0]
+                const isActive = !link.hash && pathname === link.href
                 if (link.external) {
                   return (
                     <a
@@ -265,6 +353,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                   <Link
                     key={`${link.title}:${link.href}`}
                     to={link.href}
+                    hash={link.hash}
                     title={t(link.title)}
                     disabled={link.disabled}
                     onClick={(event) => handleNavLinkClick(event, link)}
@@ -362,7 +451,11 @@ export function PublicHeader(props: PublicHeaderProps) {
         <div className='flex h-full flex-col justify-between px-8 pt-20 pb-10'>
           <nav className='flex flex-col gap-1'>
             {links.map((link, i) => {
-              const isActive = pathname === link.href
+              const isActive = !link.hash && pathname === link.href
+              const groupLabel =
+                link.group && links[i - 1]?.group !== link.group
+                  ? link.group
+                  : undefined
               const linkClassName = cn(
                 'flex items-center gap-3 py-3 text-base font-medium tracking-tight transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
                 mobileOpen
@@ -384,7 +477,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                     aria-disabled={link.disabled}
                     tabIndex={link.disabled ? -1 : undefined}
                     onClick={(event) => handleNavLinkClick(event, link, true)}
-                    className={linkClassName}
+                    className={cn(linkClassName, link.group && 'pl-3')}
                     style={transitionStyle}
                   >
                     {t(link.title)}
@@ -392,16 +485,26 @@ export function PublicHeader(props: PublicHeaderProps) {
                 )
               }
               return (
-                <Link
-                  key={`${link.title}:${link.href}`}
-                  to={link.href}
-                  disabled={link.disabled}
-                  onClick={(event) => handleNavLinkClick(event, link, true)}
-                  className={linkClassName}
-                  style={transitionStyle}
-                >
-                  {t(link.title)}
-                </Link>
+                <Fragment key={`${link.title}:${link.href}`}>
+                  {groupLabel && (
+                    <span
+                      className='text-muted-foreground/70 mt-3 font-mono text-[11px] tracking-[0.2em] uppercase'
+                      style={transitionStyle}
+                    >
+                      {groupLabel}
+                    </span>
+                  )}
+                  <Link
+                    to={link.href}
+                    hash={link.hash}
+                    disabled={link.disabled}
+                    onClick={(event) => handleNavLinkClick(event, link, true)}
+                    className={cn(linkClassName, link.group && 'pl-3')}
+                    style={transitionStyle}
+                  >
+                    {t(link.title)}
+                  </Link>
+                </Fragment>
               )
             })}
           </nav>

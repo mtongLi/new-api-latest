@@ -20,7 +20,15 @@ For commercial licensing, please contact support@quantumnous.com
  * Home page constants
  * All hardcoded data for home page sections
  */
-import { type TFunction } from 'i18next'
+import type { TFunction } from 'i18next'
+
+// Company site - brand names are proper nouns and are not translated
+export const COMPANY_BRAND_NAME = 'CherayeAI'
+export const MASS_PRODUCT_NAME = 'Mass'
+
+// Home page variant: the company site replaces the gateway landing page.
+// Set to false to show the original gateway landing sections again.
+export const SHOW_COMPANY_SITE = true
 
 // Layout - Main base classes
 export const MAIN_BASE_CLASSES = 'bg-background text-foreground w-full'

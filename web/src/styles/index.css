@@ -557,6 +557,63 @@ For commercial licensing, please contact support@quantumnous.com
   }
 }
 
+/* Company site — a light pulse travelling along pipeline connectors */
+@keyframes company-flow {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(400%);
+  }
+}
+.company-flow-pulse {
+  animation: company-flow 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .company-flow-pulse {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* Company site — slow gradient pan for headline text */
+@keyframes company-gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+.company-gradient-text {
+  background-size: 200% 100%;
+  animation: company-gradient-pan 8s ease-in-out infinite;
+}
+
+/* Company site — seamless horizontal marquee (content is duplicated once) */
+@keyframes company-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.company-marquee {
+  animation: company-marquee 40s linear infinite;
+}
+.company-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .company-gradient-text,
+  .company-marquee {
+    animation: none;
+  }
+}
+
 /* Micro-interactions — Vercel-style subtle hover/active feedback */
 @media (prefers-reduced-motion: no-preference) {
   [data-slot='card']:not([data-card-hover='false']) {

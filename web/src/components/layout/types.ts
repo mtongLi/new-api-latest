@@ -93,6 +93,10 @@ export type SidebarData = {
 export type TopNavLink = {
   title: string
   href: string
+  /** In-page anchor on `href`, e.g. a home page section */
+  hash?: string
+  /** Links sharing a group render together as one dropdown in the public header */
+  group?: string
   isActive?: boolean
   disabled?: boolean
   requiresAuth?: boolean

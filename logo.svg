@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+    <defs>
+        <!-- 科技青蓝渐变：深海蓝 → 电光蓝 → 霓虹青 -->
+        <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1d4ed8" />
+            <stop offset="55%" stop-color="#0ea5e9" />
+            <stop offset="100%" stop-color="#22f0ff" />
+        </linearGradient>
+
+        <!-- 科技紫渐变：靛紫 → 电光紫 → 霓虹粉紫 -->
+        <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#4f46e5" />
+            <stop offset="55%" stop-color="#8b5cf6" />
+            <stop offset="100%" stop-color="#d946ef" />
+        </linearGradient>
+
+        <!-- 霓虹辉光：带冷色调的柔和外发光 -->
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="5" />
+            <feOffset dx="0" dy="3" result="offsetblur" />
+            <feFlood flood-color="#3b82f6" flood-opacity="0.35" />
+            <feComposite in2="offsetblur" operator="in" />
+            <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+    </defs>
+
+    <!-- 整体图形整体缩放，增加与边缘的留白 -->
+    <g transform="translate(100 100) scale(0.82) translate(-100 -100)">
+        <!-- 左上角紫色方块 -->
+        <rect x="20" y="20" width="60" height="60" rx="14" ry="14"
+              fill="url(#orangeGradient)" filter="url(#shadow)"/>
+
+        <!-- 右上角青蓝风筝形 -->
+        <polygon points="80,120 120,20 180,20 180,80"
+                 fill="url(#blueGradient)" filter="url(#shadow)" />
+
+        <!-- 左下角青蓝图形：轻微旋转的圆角方形 -->
+        <rect x="22" y="122" width="60" height="60" rx="20" ry="20"
+              fill="url(#blueGradient)" filter="url(#shadow)"
+              transform="rotate(-10 52 152)"/>
+
+        <!-- 右下角紫色平行四边形 -->
+        <polygon points="80,120 180,120 180,180 120,180"
+                 fill="url(#orangeGradient)" filter="url(#shadow)"/>
+    </g>
+</svg>

@@ -26,7 +26,19 @@ import { useTheme } from '@/context/theme-provider'
 import { isLikelyHtml } from '@/lib/content-format'
 import { useAuthStore } from '@/stores/auth-store'
 
-import { CTA, Features, Hero, HowItWorks, Stats } from './components'
+import {
+  CompanyAbout,
+  CompanyHero,
+  CompanyServices,
+  CTA,
+  Features,
+  Hero,
+  HowItWorks,
+  MassSpotlight,
+  ModelMarquee,
+  Stats,
+} from './components'
+import { SHOW_COMPANY_SITE } from './constants'
 import { useHomePageContent } from './hooks'
 
 export function Home() {
@@ -116,6 +128,22 @@ export function Home() {
             className='custom-home-content'
           />
         </div>
+      </PublicLayout>
+    )
+  }
+
+  if (SHOW_COMPANY_SITE) {
+    return (
+      <PublicLayout
+        showMainContainer={false}
+        headerProps={{ showVersion: false }}
+      >
+        <CompanyHero />
+        <ModelMarquee />
+        <CompanyServices />
+        <MassSpotlight isAuthenticated={isAuthenticated} />
+        <CompanyAbout />
+        <Footer />
       </PublicLayout>
     )
   }
