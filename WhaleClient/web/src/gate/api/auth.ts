@@ -169,7 +169,7 @@ const createAccessToken = async (pending: PendingSession, verification: Record<s
     method: 'POST',
     bearer: sessionToken,
     headers: { 'X-Security-Proof': proof.proof_token },
-    json: { name: `鲸鱼娘 Web · ${navigator.platform || 'browser'}`, scopes, expires_at: expiresAt },
+    json: { name: `小虎鲸 Web · ${navigator.platform || 'browser'}`, scopes, expires_at: expiresAt },
   })
 
   await endSession(pending)

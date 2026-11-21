@@ -122,7 +122,7 @@ const Root = () => {
         <div className="login-card">
           <div className="brand">
             <img className="brand-logo" src="brand-avatar.png" alt="" />
-            <div className="brand-name">鲸鱼娘</div>
+            <div className="brand-name">小虎鲸</div>
           </div>
           {error ? <div className="error">{error}</div> : <div className="notice">正在准备…</div>}
         </div>

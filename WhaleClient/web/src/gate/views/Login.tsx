@@ -120,7 +120,7 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
       <div className="login-card">
         <div className="brand">
           <img className="brand-logo" src="brand-avatar.png" alt="" />
-          <div className="brand-name">鲸鱼娘</div>
+          <div className="brand-name">小虎鲸</div>
         </div>
 
         {step ? null : (
@@ -146,11 +146,6 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
         {mode === 'register' && !canRegister ? (
           <div className="error">该服务器未开放注册</div>
         ) : null}
-
-        <label className="field">
-          <span>服务器</span>
-          <input value={server} placeholder="留空 = 同源代理" onChange={(e) => setServer(e.target.value)} />
-        </label>
 
         {step ? (
           <label className="field">

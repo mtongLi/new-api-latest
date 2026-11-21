@@ -64,7 +64,7 @@ export const SessionItem = memo(function SessionItem({
     const detail = useChatStore.getState().sessionCache[session.id]
     const lines = (detail?.messages ?? [])
       .filter((message) => typeof message.content === 'string' && message.content)
-      .map((message) => `${message.role === 'user' ? '我' : '鲸鱼娘'}：${message.content}`)
+      .map((message) => `${message.role === 'user' ? '我' : '小虎鲸'}：${message.content}`)
     const text = [displayTitle, '', ...lines].join('\n').slice(0, 8000)
     try {
       await navigator.clipboard.writeText(text)

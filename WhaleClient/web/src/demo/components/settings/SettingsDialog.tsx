@@ -472,7 +472,7 @@ const AccountPanel = () => {
 
 const TermsPanel = () => (
   <div className={styles.terms}>
-    <p>鲸鱼娘是个人项目，与 DeepSeek 官方无关。</p>
+    <p>小虎鲸是个人项目，与 DeepSeek 官方无关。</p>
     <p>使用即表示你同意：不将本服务用于违法用途，不转售或公开传播接口凭据。</p>
     <p>对话内容默认只存在本机浏览器，不上传服务器。</p>
     <p>模型输出由上游服务提供商生成，可能存在错误，请自行判断。</p>

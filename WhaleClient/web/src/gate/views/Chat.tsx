@@ -75,7 +75,7 @@ export const Chat = ({ auth, onSignOut }: Props) => {
       <header className="topbar">
         <div className="brand small">
           <img className="brand-logo" src="/brand-avatar.png" alt="" />
-          <span className="brand-name">鲸鱼娘</span>
+          <span className="brand-name">小虎鲸</span>
         </div>
         <div className="topbar-right">
           <select value={model} onChange={(e) => setModel(e.target.value)}>

@@ -80,11 +80,11 @@ export const Landing = () => {
           <span>
             社区观察反馈：官方收紧免费使用额度，并推出多重限制，高峰期还需排队等待。
             <br />
-            本应用基于官方开放 API 构建，按量付费、畅享不限速，鲸鱼娘已备好，随时酣畅开聊 🐋
+            本应用基于官方开放 API 构建，按量付费、畅享不限速，小虎鲸已备好，随时酣畅开聊 🐋
           </span>
         </div>
 
-        <h1 className="lp-title">和鲸鱼娘尽情玩耍</h1>
+        <h1 className="lp-title">和大肥鱼尽情玩耍</h1>
 
         <div className="lp-card">
           <input
@@ -124,7 +124,7 @@ export const Landing = () => {
         <div className="lp-actions">
           <button type="button" className="lp-action" onClick={() => goChat()}>
             <ChatIcon />
-            和鲸鱼娘对话
+            和小虎鲸对话
           </button>
           <button type="button" className="lp-action" onClick={openAccount}>
             <AccountIcon />

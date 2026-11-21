@@ -14,7 +14,7 @@ type Brand = {
 const injected = (globalThis as unknown as { __BRAND__?: Partial<Brand> }).__BRAND__
 
 export const brand: Brand = {
-  name: injected?.name || '鲸鱼娘',
+  name: injected?.name || '小虎鲸',
   avatar: injected?.avatar || 'brand-avatar.png',
   account: injected?.account || '',
 }
