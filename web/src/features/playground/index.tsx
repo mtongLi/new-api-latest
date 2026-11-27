@@ -16,6 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import type { ReactNode } from 'react'
+
 import { PlaygroundChat } from './components/chat/playground-chat'
 import { PlaygroundInput } from './components/input/playground-input'
 import {
@@ -24,8 +26,24 @@ import {
   usePlaygroundOptions,
   usePlaygroundState,
 } from './hooks'
+import type { ModelOption } from './types'
 
-export function Playground() {
+/** Model state handed to an embedding page that renders its own model list. */
+export type PlaygroundModelPanel = {
+  models: ModelOption[]
+  value: string
+  onChange: (model: string) => void
+  isLoading: boolean
+}
+
+type PlaygroundProps = {
+  /** Renders a model list to the left of the conversation. */
+  renderModelPanel?: (panel: PlaygroundModelPanel) => ReactNode
+  /** Replaces the starter screen shown before the first message. */
+  renderEmptyState?: (onSelectPrompt: (prompt: string) => void) => ReactNode
+}
+
+export function Playground(props: PlaygroundProps = {}) {
   const {
     config,
     parameterEnabled,
@@ -74,7 +92,7 @@ export function Playground() {
     updateConfig,
   })
 
-  return (
+  const conversation = (
     <div className='relative flex size-full min-h-0 flex-col overflow-hidden'>
       {/* Full-width scroll container: scrolling works even over side whitespace */}
       <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
@@ -85,6 +103,7 @@ export function Playground() {
           onEditMessage={handleEditMessage}
           onDeleteMessage={handleDeleteMessage}
           onSelectPrompt={handleSendMessage}
+          renderEmptyState={props.renderEmptyState}
           isGenerating={isGenerating}
           editingKey={editingMessageKey}
           onCancelEdit={handleEditOpenChange}
@@ -115,6 +134,20 @@ export function Playground() {
           hasMessages={messages.length > 0}
         />
       </div>
+    </div>
+  )
+
+  if (!props.renderModelPanel) return conversation
+
+  return (
+    <div className='flex size-full min-h-0'>
+      {props.renderModelPanel({
+        models,
+        value: config.model,
+        onChange: (value) => updateConfig('model', value),
+        isLoading: isLoadingModels,
+      })}
+      <div className='min-w-0 flex-1'>{conversation}</div>
     </div>
   )
 }

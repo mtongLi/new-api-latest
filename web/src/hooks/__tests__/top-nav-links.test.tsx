@@ -41,14 +41,14 @@ afterEach(() => {
 })
 
 describe('useTopNavLinks', () => {
-  it('groups platform links under Models and adds the business anchor with default modules', () => {
+  it('groups platform links under Models, places Studio top-level before them and adds the products anchor without a Home link (the logo links home) with default modules', () => {
     const links = renderNavLinks({})
 
     expect(
       links.map((link) => [link.title, link.href, link.hash, link.group])
     ).toEqual([
-      ['Home', '/', undefined, undefined],
-      ['Business', '/', 'services', undefined],
+      ['Products', '/', 'services', undefined],
+      ['Studio', '/studio', undefined, undefined],
       ['Console', '/dashboard', undefined, 'Models'],
       ['Model Square', '/pricing', undefined, 'Models'],
       ['Rankings', '/rankings', undefined, 'Models'],
@@ -64,5 +64,21 @@ describe('useTopNavLinks', () => {
 
     expect(links.some((link) => link.hash === 'services')).toBe(false)
     expect(links.some((link) => link.href === '/')).toBe(false)
+  })
+
+  it('lets anonymous visitors open the studio link without a sign-in prompt', () => {
+    const links = renderNavLinks({})
+
+    expect(
+      links.find((link) => link.href === '/studio')?.requiresAuth
+    ).toBeFalsy()
+  })
+
+  it('hides the studio link when the studio module is disabled', () => {
+    const links = renderNavLinks({
+      HeaderNavModules: JSON.stringify({ studio: false }),
+    })
+
+    expect(links.some((link) => link.href === '/studio')).toBe(false)
   })
 })

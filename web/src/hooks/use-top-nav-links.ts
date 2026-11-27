@@ -64,10 +64,16 @@ export function useTopNavLinks(): TopNavLink[] {
 
   const links: TopNavLink[] = []
 
-  // Home, plus the company site's business section
+  // The logo already links home, so the home module only adds the company
+  // site's products section
   if (modules?.home !== false) {
-    links.push({ title: t('Home'), href: '/' })
-    links.push({ title: t('Business'), href: '/', hash: 'services' })
+    links.push({ title: t('Products'), href: '/', hash: 'services' })
+  }
+
+  // Studio -> creation workspace, a top-level entry placed left of the Models
+  // dropdown. Visitors may browse it; sign-in is asked for on submit.
+  if (modules?.studio !== false) {
+    links.push({ title: t('Studio'), href: '/studio' })
   }
 
   // Model platform entries are grouped into one dropdown in the public header

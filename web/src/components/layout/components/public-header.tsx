@@ -74,6 +74,8 @@ export interface PublicHeaderProps {
   showNotifications?: boolean
   /** Show the system version badge beside the site name */
   showVersion?: boolean
+  /** Always use the centered compact bar instead of switching on scroll */
+  compact?: boolean
   className?: string
 }
 
@@ -110,6 +112,7 @@ export function PublicHeader(props: PublicHeaderProps) {
   const routerState = useRouterState()
   const pathname = routerState.location.pathname
 
+  const compact = scrolled || props.compact === true
   const user = auth.user
   const isAuthenticated = !!user
   const displaySiteName = customSiteName || systemName
@@ -233,13 +236,13 @@ export function PublicHeader(props: PublicHeaderProps) {
         <div
           className={cn(
             'pointer-events-auto mx-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]',
-            scrolled ? 'max-w-[52rem] px-3 pt-3' : 'max-w-7xl px-4 pt-0 md:px-6'
+            compact ? 'max-w-[52rem] px-3 pt-3' : 'max-w-7xl px-4 pt-0 md:px-6'
           )}
         >
           <nav
             className={cn(
               'flex items-center justify-between gap-2 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]',
-              scrolled
+              compact
                 ? 'bg-background/60 ring-border/50 h-12 rounded-2xl pr-1.5 pl-4 shadow-[0_2px_16px_-6px_rgba(0,0,0,0.08),0_0_0_0.5px_rgba(0,0,0,0.02)] ring-[0.5px] backdrop-blur-2xl dark:shadow-[0_2px_16px_-6px_rgba(0,0,0,0.4)]'
                 : 'h-16 px-2'
             )}

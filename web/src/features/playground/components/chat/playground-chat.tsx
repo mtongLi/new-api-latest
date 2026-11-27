@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -60,6 +60,8 @@ interface PlaygroundChatProps {
   onCancelEdit?: (open: boolean) => void
   onSaveEditAndSubmit?: (newContent: string) => void
   messageLayoutMode?: PlaygroundMessageLayoutMode
+  /** Replaces the default starter screen shown before the first message. */
+  renderEmptyState?: (onSelectPrompt: (prompt: string) => void) => ReactNode
 }
 
 export function PlaygroundChat({
@@ -76,6 +78,7 @@ export function PlaygroundChat({
   onCancelEdit,
   onSaveEditAndSubmit,
   messageLayoutMode = 'alternating',
+  renderEmptyState,
 }: PlaygroundChatProps) {
   const { t } = useTranslation()
   const [editText, setEditText] = useState('')
@@ -195,7 +198,11 @@ export function PlaygroundChat({
 
   if (visibleMessages.length === 0 && onSelectPrompt) {
     chatContent = [
-      <PlaygroundEmptyState key='empty' onSelectPrompt={onSelectPrompt} />,
+      renderEmptyState ? (
+        <Fragment key='empty'>{renderEmptyState(onSelectPrompt)}</Fragment>
+      ) : (
+        <PlaygroundEmptyState key='empty' onSelectPrompt={onSelectPrompt} />
+      ),
     ]
   }
 

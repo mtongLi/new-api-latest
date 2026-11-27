@@ -802,3 +802,97 @@ For commercial licensing, please contact support@quantumnous.com
     display: none;
   }
 }
+
+/* Creation studio — drifting gradients, shine sweeps and a glowing border */
+@property --studio-glow-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes studio-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes studio-shine {
+  from {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  to {
+    transform: translateX(220%) skewX(-20deg);
+  }
+}
+
+@keyframes studio-glow-spin {
+  to {
+    --studio-glow-angle: 360deg;
+  }
+}
+
+@keyframes studio-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(6%, -4%, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-5%, 5%, 0) scale(0.96);
+  }
+}
+
+/* Slowly panning multi-stop gradient (titles, video covers, loading art). */
+.studio-pan {
+  background-size: 220% 220%;
+  animation: studio-pan 8s ease-in-out infinite;
+}
+
+/* Light streak that crosses an element once per hover. */
+.studio-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 0.35),
+    transparent
+  );
+  transform: translateX(-120%) skewX(-20deg);
+  pointer-events: none;
+}
+.studio-shine:hover::after,
+.studio-shine:focus-visible::after {
+  animation: studio-shine 0.9s ease-out;
+}
+
+/* Rotating conic border; color stops come from --studio-glow-colors. */
+.studio-glow-border {
+  background: conic-gradient(
+    from var(--studio-glow-angle),
+    var(--studio-glow-colors, #8b5cf6, #ec4899, #22d3ee, #8b5cf6)
+  );
+  animation: studio-glow-spin 4s linear infinite;
+}
+
+.studio-drift {
+  animation: studio-drift 18s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-pan,
+  .studio-glow-border,
+  .studio-drift,
+  .studio-shine:hover::after,
+  .studio-shine:focus-visible::after {
+    animation: none !important;
+  }
+}
