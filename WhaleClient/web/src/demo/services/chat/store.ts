@@ -955,6 +955,58 @@ const waitForRetry = (attempt: number, signal: AbortSignal) =>
   })
 
 /**
+ * 服务端没有返回标题时，本地用首条提问生成一个短标题。
+ * 只取第一句用户内容，要求模型只输出标题本身。
+ */
+const generateTitle = async (sessionId: string) => {
+  const session = getSession(sessionId)
+  if (!session) return
+  const firstUser = session.messages.find((message) => message.role === 'user')
+  const firstAssistant = session.messages.find((message) => message.role === 'assistant')
+  const question = firstUser?.content?.trim()
+  if (!question) return
+  const answer = (firstAssistant?.content ?? '').slice(0, 300)
+
+  const controller = new AbortController()
+  try {
+    const events = streamMessage(
+      useSettings.getState().apiKey ?? '',
+      {
+        model: MODEL,
+        system: '根据这轮问答概括会话主题，只输出不超过 12 个汉字，不要标点，不要解释。',
+        messages: [
+          {
+            role: 'user',
+            content: `用户：${question.slice(0, 200)}\n助手：${answer}`,
+          },
+        ],
+        thinking: { type: 'disabled' },
+        safety_check: SAFETY_CHECK,
+        tools: [],
+      },
+      controller.signal
+    )
+    let text = ''
+    for await (const event of events) {
+      if (event.type === 'content_block_delta' && event.delta.text) {
+        text += event.delta.text
+        if (text.length > 40) {
+          controller.abort()
+          break
+        }
+      }
+    }
+    const title = text.replace(/[\n"“”《》【】]/g, '').trim().slice(0, 14)
+    if (title && !getSession(sessionId)?.title) {
+      updateSession(sessionId, (value) => (value.title ? value : { ...value, title }))
+      void db.renameSession(sessionId, title).catch(db.reportStorageError('rename session'))
+    }
+  } catch {
+    // 标题失败不影响对话
+  }
+}
+
+/**
  * 请求并消费流：先补齐附件的 serverId，再发请求；流式增量按动画帧刷新内存，完成、失败或停止后落盘。
  * 补传失败时回复记为 upload 错误，可重试。
  * 服务端判定 file_id 失效时重新补传后重发，退避重试且次数有上限，超过则按原始报错收尾。
@@ -1031,6 +1083,10 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
           }
         }
         reply = settleReply(reply, 'done', Date.now())
+        if (!getSession(sessionId)?.title && titleRequests.has(controller)) {
+          titleRequests.delete(controller)
+          void generateTitle(sessionId)
+        }
         break
       } catch (error) {
         if (controller.signal.aborted) {

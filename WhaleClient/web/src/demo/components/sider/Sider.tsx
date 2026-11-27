@@ -25,7 +25,9 @@ import { showToast } from '../base/toastState.js'
 import { openSettings } from '../settings/settingsDialogState.js'
 import { closeMobileSider, useMobileSider } from './mobileSiderState.js'
 import { SessionItem } from './SessionItem.js'
+import { readAvatar } from '../../../gate/api/auth.js'
 import { AppDialog, isMobile } from '../../../gate/views/AppDialog.js'
+import { AccountDialog } from '../../../gate/views/AccountDialog.js'
 import { DownloadPopover } from '../../../gate/views/DownloadPopover.js'
 import { SearchDialog } from './SearchDialog.js'
 import styles from './Sider.module.css'
@@ -58,12 +60,31 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const activeId = useChatStore((state) => state.activeId)
   const [now, setNow] = useState(Date.now)
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const sync = () => setAvatar(readAvatar())
+    window.addEventListener('whaleclient:avatar', sync)
+    return () => window.removeEventListener('whaleclient:avatar', sync)
+  }, [])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onPointerDown = (event: PointerEvent) => {
+      if (!accountRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [menuOpen])
   const [appOpen, setAppOpen] = useState(false)
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [pinVersion, setPinVersion] = useState(0)
   const [hoverList, setHoverList] = useState(false)
   const [hoverDownload, setHoverDownload] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [avatar, setAvatar] = useState<string | null>(() => readAvatar())
 
   useEffect(() => {
     const refresh = () => setPinVersion((value) => value + 1)
@@ -98,6 +119,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
       : base
   }, [filtered, now, t, pinned])
   const importRef = useRef<HTMLInputElement>(null)
+  const accountRef = useRef<HTMLDivElement>(null)
   const [importing, setImporting] = useState(false)
 
   const importFile = async (file: File | undefined) => {
@@ -301,11 +323,11 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
           }}
         />
 
-        <div className={styles.accountRow}>
+        <div className={styles.accountRow} ref={accountRef}>
           <button type="button" className={styles.account} onClick={() => setMenuOpen((v) => !v)}>
             <span className={styles.accountAvatarWrap}>
               {brand.avatar ? (
-                <img className={styles.accountAvatar} src={brand.avatar} alt="" />
+                <img className={styles.accountAvatar} src={avatar || brand.avatar} alt="" />
               ) : (
                 <span className={styles.accountAvatarFallback}>
                   {(brand.account || brand.name).slice(0, 1).toUpperCase()}
@@ -360,6 +382,20 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
                 <IconSettingsOutline16 />
                 系统设置
               </button>
+              <button
+                type="button"
+                className={styles.menuItem}
+                onClick={() => {
+                  setMenuOpen(false)
+                  setAccountOpen(true)
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <circle cx="8" cy="5.4" r="2.6" stroke="currentColor" strokeWidth="1.2" />
+                  <path d="M3.2 13c.9-2.1 2.7-3.2 4.8-3.2s3.9 1.1 4.8 3.2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                账号管理
+              </button>
               <button type="button" className={styles.menuItem} onClick={() => signOut()}>
                 <span className={styles.menuArrow}>→</span>
                 退出登录
@@ -370,6 +406,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
       </div>
       {searchOpen ? <SearchDialog onClose={() => setSearchOpen(false)} /> : null}
       {appOpen ? <AppDialog onClose={() => setAppOpen(false)} /> : null}
+      {accountOpen ? <AccountDialog onClose={() => setAccountOpen(false)} /> : null}
       {deleting ? (
         <Modal
           title={t('deleteSessionModalContentTitle')}

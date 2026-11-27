@@ -15,6 +15,11 @@ import (
 )
 
 func SetApiRouter(router *gin.Engine) {
+
+	// 用户头像静态文件
+	router.Static("/avatars", "./data/avatars")
+
+
 	apiRouter := router.Group("/api")
 	apiRouter.Use(middleware.RouteTag("api"))
 	apiRouter.Use(gzip.Gzip(gzip.DefaultCompression))
@@ -100,6 +105,7 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.GET("/self", controller.GetSelf)
 				selfRoute.GET("/models", controller.GetUserModels)
 				selfRoute.PUT("/self", middleware.CriticalRateLimit(), middleware.DisableCache(), controller.UpdateSelf)
+				selfRoute.POST("/avatar", middleware.DisableCache(), controller.UploadAvatar)
 				selfRoute.DELETE("/self", middleware.DisableCache(), controller.DeleteSelf)
 				accessTokenRoute := selfRoute.Group("/access_tokens")
 				accessTokenRoute.Use(middleware.DisableCache())
@@ -154,6 +160,13 @@ func SetApiRouter(router *gin.Engine) {
 			adminRoute.Use(middleware.AdminAuth())
 			{
 				adminRoute.GET("/", controller.GetAllUsers)
+				adminRoute.GET("/funds/overview", controller.GetFundsOverview)
+				adminRoute.GET("/upstream/balance", controller.GetUpstreamBalance)
+				adminRoute.POST("/quota/adjust", controller.AdjustUserQuota)
+				adminRoute.GET("/usage/detail", controller.GetUsageDetail)
+				adminRoute.GET("/platform/overview", controller.GetPlatformOverview)
+				adminRoute.GET("/platform/settings", controller.GetPlatformSettings)
+				adminRoute.PUT("/platform/settings", controller.UpdatePlatformSettings)
 				adminRoute.GET("/topup", controller.GetAllTopUps)
 				adminRoute.POST("/topup/complete", controller.AdminCompleteTopUp)
 				adminRoute.GET("/search", controller.SearchUsers)

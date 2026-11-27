@@ -2481,3 +2481,21 @@ select {
   flex-shrink: 0;
   border-radius: 50%;
 }
+
+/* 账号管理弹窗 */
+.acc-mask { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); }
+.acc-dialog { width: min(440px, 92vw); padding: 20px; border-radius: 16px; background: #1d2027; color: #eef0f3; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+.acc-head { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.acc-head button { border: 0; background: none; color: #9aa1ab; font-size: 18px; cursor: pointer; }
+.acc-avatar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.acc-avatar { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: #4176e6; font-size: 20px; font-weight: 600; }
+.acc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.acc-upload { display: inline-flex; align-items: center; height: 30px; padding: 0 14px; border: 1px solid rgba(255,255,255,.16); border-radius: 15px; font-size: 12px; cursor: pointer; }
+.acc-upload input { display: none; }
+.acc-field { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-top: 1px solid rgba(255,255,255,.08); font-size: 12px; color: #9aa1ab; }
+.acc-field strong { color: #eef0f3; font-size: 14px; }
+.acc-inline { display: flex; gap: 8px; }
+.acc-inline input { flex: 1; min-width: 0; height: 32px; padding: 0 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 9px; background: #15181d; color: #eef0f3; font-size: 13px; outline: none; }
+.acc-inline button { height: 32px; padding: 0 14px; border: 0; border-radius: 9px; background: #4176e6; color: #fff; font-size: 13px; cursor: pointer; }
+.acc-error { margin-top: 8px; color: #f2555a; font-size: 12px; }
+.acc-ok { margin-top: 8px; color: #3ecf8e; font-size: 12px; }

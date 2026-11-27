@@ -146,6 +146,12 @@ export function AppHeader({
               loading={notifications.loading}
             />
           )}
+          <a
+            href='/lite'
+            className='border-border text-muted-foreground hover:text-foreground hidden rounded-md border px-2 py-1 text-xs sm:inline-block'
+          >
+            新版后台
+          </a>
           <LanguageSwitcher />
           {showConfigDrawer && <ConfigDrawer />}
           {showProfileDropdown && <ProfileDropdown />}

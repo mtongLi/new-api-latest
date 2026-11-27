@@ -73,7 +73,15 @@ export const request = async <T>(
   }
 
   if (!response.ok || body?.success === false) {
-    throw responseError(response, body)
+    const fallback =
+      response.status === 429
+        ? '请求太频繁，请稍等一会儿再试'
+        : response.status === 401
+          ? '用户名或密码不正确'
+          : response.status >= 500
+            ? '服务暂时不可用，请稍后再试'
+            : `HTTP ${response.status}`
+    throw new ApiError(body?.message || fallback, response.status)
   }
   return (body?.data ?? (body as unknown)) as T
 }

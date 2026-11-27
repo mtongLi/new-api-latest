@@ -1,9 +1,11 @@
 import { useTranslate } from '../../i18n/index.js'
 import clsx from 'clsx'
-import { memo, useLayoutEffect, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useIsMobile } from '../../app/viewport.js'
 import { IconEditOutline16 } from '../base/icons.js'
 import { editMessage, retryUpload } from '../../services/chat/store.js'
+import { readAvatar } from '../../../gate/api/auth.js'
+import { brand } from '../../app/brand.js'
 import { stopReadAloud } from '../../services/speech/readAloud.js'
 import type { UserMessage as UserMessageType } from '../../services/chat/types.js'
 import { Button } from '../base/Button.js'
@@ -43,6 +45,13 @@ export const UserMessage = memo(function UserMessage({
   const [draft, setDraft] = useState(message.content)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isMobile = useIsMobile()
+  const [avatar, setAvatar] = useState<string | null>(() => readAvatar())
+
+  useEffect(() => {
+    const sync = () => setAvatar(readAvatar())
+    window.addEventListener('whaleclient:avatar', sync)
+    return () => window.removeEventListener('whaleclient:avatar', sync)
+  }, [])
   const canSend = !busy && (draft.trim() !== '' || message.files.length > 0)
 
   useLayoutEffect(() => {
@@ -62,6 +71,7 @@ export const UserMessage = memo(function UserMessage({
 
   return (
     <div className={clsx(styles.container, isFirst && styles.isFirst)}>
+      <img className={styles.userAvatar} src={avatar || brand.avatar} alt="" />
       {message.files.length > 0 ? (
         <div
           className={clsx(

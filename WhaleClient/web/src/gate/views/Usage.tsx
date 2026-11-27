@@ -162,6 +162,146 @@ const Chart = ({
   )
 }
 
+const Recharge = ({
+  auth,
+  startQuota,
+  onClose,
+  onPaid,
+}: {
+  auth: NonNullable<ReturnType<typeof loadAuth>>
+  startQuota: number
+  onClose: () => void
+  onPaid: () => void
+}) => {
+  type Method = { name: string; type: string }
+  const [info, setInfo] = useState<{ pay_methods?: Method[]; min_topup?: number } | null>(null)
+  const [amount, setAmount] = useState('10')
+  const [method, setMethod] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'waiting' | 'paid' | 'timeout'>('idle')
+
+  useEffect(() => {
+    request<{ pay_methods?: Method[]; min_topup?: number }>(auth.server, '/api/user/topup/info', {
+      method: 'GET',
+      bearer: auth.token,
+    })
+      .then((value) => {
+        setInfo(value ?? {})
+        setMethod(value?.pay_methods?.[0]?.type ?? '')
+      })
+      .catch(() => setInfo({}))
+  }, [auth])
+
+  /** 支付页在新窗口；本页轮询余额，到账后提示，不跳控制台 */
+  const waitForPayment = () => {
+    setStatus('waiting')
+    const started = Date.now()
+    const timer = window.setInterval(async () => {
+      try {
+        const profile = await fetchSelf(auth)
+        if ((profile?.quota ?? 0) > startQuota) {
+          window.clearInterval(timer)
+          setStatus('paid')
+          onPaid()
+          return
+        }
+      } catch {
+        // 单次失败忽略
+      }
+      if (Date.now() - started > 5 * 60 * 1000) {
+        window.clearInterval(timer)
+        setStatus('timeout')
+      }
+    }, 5000)
+  }
+
+  const pay = async () => {
+    setBusy(true)
+    setError('')
+    try {
+      const value = Number(amount)
+      if (!Number.isFinite(value) || value <= 0) throw new Error('请输入有效金额')
+      const result = await request<{ url?: string }>(auth.server, '/api/user/pay', {
+        method: 'POST',
+        bearer: auth.token,
+        json: { amount: value, payment_method: method },
+      })
+      if (!result?.url) throw new Error('服务端没有返回支付地址')
+      window.open(result.url, '_blank', 'noopener')
+      waitForPayment()
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const methods = info?.pay_methods ?? []
+
+  return (
+    <div className="usage-mask" onClick={onClose}>
+      <div className="usage-dialog" onClick={(event) => event.stopPropagation()}>
+        <div className="usage-dialog-title">充值</div>
+
+        {info && methods.length === 0 ? (
+          <>
+            <div className="usage-dialog-note">
+              管理员还没有开启在线充值。请把用户名发给管理员，由管理员给账号加额度。
+            </div>
+            <button type="button" className="usage-dialog-close" onClick={onClose}>
+              知道了
+            </button>
+          </>
+        ) : status === 'waiting' || status === 'timeout' ? (
+          <>
+            <div className="usage-dialog-note">
+              支付页已打开。付款完成后回到这里，余额会自动刷新，请不要关闭本页。
+            </div>
+            {status === 'timeout' ? <div className="usage-dialog-error">等待超时，刷新页面再看余额</div> : null}
+            <button type="button" className="usage-dialog-close" onClick={onClose}>
+              关闭
+            </button>
+          </>
+        ) : status === 'paid' ? (
+          <>
+            <div className="usage-dialog-note">充值已到账，余额已更新。</div>
+            <button type="button" className="usage-dialog-close" onClick={onClose}>
+              好
+            </button>
+          </>
+        ) : (
+          <>
+            <label className="usage-field">
+              <span>金额（元）</span>
+              <input value={amount} inputMode="decimal" onChange={(event) => setAmount(event.target.value)} />
+            </label>
+            <div className="usage-field">
+              <span>支付方式</span>
+              <div className="usage-methods">
+                {methods.map((item) => (
+                  <button
+                    key={item.type}
+                    type="button"
+                    className={method === item.type ? 'usage-method on' : 'usage-method'}
+                    onClick={() => setMethod(item.type)}
+                  >
+                    {item.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {error ? <div className="usage-dialog-error">{error}</div> : null}
+            <button type="button" className="usage-dialog-pay" disabled={busy} onClick={pay}>
+              {busy ? '处理中…' : '去支付'}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export const Usage = () => {
   // 只读一次：每次渲染新建对象会让下面的 effect 反复请求
   const [auth] = useState(loadAuth)
@@ -338,13 +478,9 @@ export const Usage = () => {
       {recharging && auth ? (
         <Recharge
           auth={auth}
-          unit={{ quotaPerUnit: unit, rate, displayType: status.quota_display_type }}
+          startQuota={self?.quota ?? 0}
           onClose={() => setRecharging(false)}
-          onPaid={() => {
-            fetchSelf(auth)
-              .then((profile) => setSelf((profile ?? {}) as Self))
-              .catch(() => undefined)
-          }}
+          onPaid={() => undefined}
         />
       ) : null}
     </div>

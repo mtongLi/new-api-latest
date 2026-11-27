@@ -32,7 +32,14 @@ import { Button } from '../base/Button.js'
 import { Modal } from '../base/Modal.js'
 import { Select } from '../base/Select.js'
 import { showToast } from '../base/toastState.js'
-import { fetchSelf, loadAuth } from '../../../gate/api/auth.js'
+import {
+  changePassword,
+  fetchSelf,
+  loadAuth,
+  readAvatar,
+  saveAvatar,
+  updateUsername,
+} from '../../../gate/api/auth.js'
 import { readSession, signOut } from '../../../gate/session.js'
 import { closeSettings, useSettingsDialog, type SettingsSection } from './settingsDialogState.js'
 import styles from './Settings.module.css'
@@ -66,7 +73,6 @@ const sections: { value: SettingsSection; label: TranslationKey; icon: ReactNode
     label: 'settingDialogAsideGeneralOptionLabel',
     icon: <IconSettingsOutline16 />,
   },
-  { value: 'account', label: 'settingDialogAsideAccountOptionLabel', icon: <IconAccount /> },
   { value: 'data', label: 'settingDialogAsideDataOptionLabel', icon: <IconDataOutline16 /> },
   { value: 'terms', label: 'settingDialogAsideTermsOptionLabel', icon: <IconDocument /> },
 ]
@@ -110,9 +116,7 @@ const SettingsContent = () => {
           ))}
         </div>
         <div role="tabpanel" className={styles.content}>
-          {section === 'account' ? (
-            <AccountPanel />
-          ) : section === 'terms' ? (
+          {section === 'terms' ? (
             <TermsPanel />
           ) : section === 'general' ? (
             <>
@@ -422,53 +426,6 @@ const errorStatus = (key: TranslationKey, error: unknown): Status => ({
     : { params: { message: error instanceof Error ? error.message : String(error) } }),
   error: true,
 })
-
-/** 账号管理：数据来自 new-api 的用户信息 */
-const AccountPanel = () => {
-  const [auth] = useState(loadAuth)
-  const [profile, setProfile] = useState<{ username?: string; email?: string } | null>(null)
-
-  useEffect(() => {
-    if (!auth) return
-    let alive = true
-    fetchSelf(auth)
-      .then((value) => alive && setProfile(value ?? null))
-      .catch(() => undefined)
-    return () => {
-      alive = false
-    }
-  }, [auth])
-
-  const session = readSession()
-
-  return (
-    <>
-      <SettingCell label="用户名" status={null} action={<strong>{profile?.username || session?.username || '-'}</strong>} />
-      <SettingCell label="邮箱" status={null} action={<span>{profile?.email || '未绑定'}</span>} />
-      <SettingCell label="手机号码" status={null} action={<span>未绑定</span>} />
-      <SettingCell label="微信" status={null} action={<span>未绑定</span>} />
-      <SettingCell label="未成年人模式" status={null} action={<span>已关闭</span>} />
-      <SettingCell
-        label="登录设备管理"
-        status={null}
-        action={
-          <Button variant="outlined" size="m" className={styles.cellButton} onClick={() => showToast('当前版本只管理本机登录')}>
-            管理
-          </Button>
-        }
-      />
-      <SettingCell
-        label="登出所有设备"
-        status={null}
-        action={
-          <Button variant="dangerOutlined" size="m" className={styles.cellButton} onClick={() => signOut()}>
-            登出
-          </Button>
-        }
-      />
-    </>
-  )
-}
 
 const TermsPanel = () => (
   <div className={styles.terms}>

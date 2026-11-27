@@ -48,6 +48,34 @@ export async function getSelf() {
   return res.data
 }
 
+export interface FundUserRow {
+  id: number
+  username: string
+  topped_up: number
+  used_quota: number
+  quota: number
+  request_count: number
+}
+
+export interface FundsOverview {
+  users: FundUserRow[]
+  quota_per_unit: number
+  usd_exchange_rate: number
+}
+
+export async function getFundsOverview(): Promise<FundsOverview | null> {
+  const res = await api.get('/api/user/funds/overview', { skipErrorHandler: true })
+  return (res.data?.data ?? null) as FundsOverview | null
+}
+
+export async function getUpstreamBalance(): Promise<{
+  is_available?: boolean
+  balance_infos?: { currency: string; total_balance: string; granted_balance: string; topped_up_balance: string }[]
+} | null> {
+  const res = await api.get('/api/user/upstream/balance', { skipErrorHandler: true })
+  return (res.data ?? null) as never
+}
+
 export async function getUserModels(): Promise<{
   success: boolean
   message?: string

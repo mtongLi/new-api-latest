@@ -79,7 +79,7 @@ export const createConfig = ({
     hot: true,
     // 开发服务器同源转发，绕开 /api 没有 CORS 头的问题
     proxy: [
-      { context: ['/api', '/v1'], target: proxyTarget, changeOrigin: true },
+      { context: ['/api', '/v1', '/avatars'], target: proxyTarget, changeOrigin: true },
     ],
     ...devServer,
   },
